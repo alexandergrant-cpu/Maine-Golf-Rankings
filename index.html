@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maine High School Golf Rankings Dashboard</title>
+    <style>
+        :root {
+            --golf-green: #1b4332;
+            --mid-green: #2d6a4f;
+            --light-bg: #f4f7f6;
+            --card-white: #ffffff;
+            --text-dark: #333333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--light-bg); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
+
+        header {
+            background-color: var(--golf-green); color: white; padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .logo-area .logo { font-size: 1.4rem; font-weight: bold; letter-spacing: 0.5px; }
+        .logo-area .tagline { font-size: 0.8rem; color: #b7e4c7; }
+        
+        nav { display: flex; gap: 0.5rem; }
+        .nav-btn {
+            background: transparent; border: 2px solid #b7e4c7; color: #b7e4c7;
+            padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 6px; font-weight: 600; transition: all 0.2s;
+        }
+        .nav-btn.active, .nav-btn:hover { background-color: #b7e4c7; color: var(--golf-green); border-color: #b7e4c7; }
+
+        main { max-width: 1400px; width: 100%; margin: 2rem auto; padding: 0 1rem; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .filter-row {
+            background: var(--card-white); padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
+        }
+        .filter-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: #555; text-transform: uppercase; }
+        select { width: 100%; padding: 0.5rem 1rem; border: 1px solid #ced4da; border-radius: 6px; background-color: #fff; font-size: 0.9rem; outline: none; }
+        select:focus { border-color: var(--mid-green); }
+
+        .leaderboard-container { background: var(--card-white); padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .section-header { margin-bottom: 1.5rem; }
+        .section-header h2 { color: var(--golf-green); margin-bottom: 0.25rem; }
+        .subtitle { color: #6c757d; font-size: 0.9rem; }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+        th, td { padding: 1rem; border-bottom: 1px solid #dee2e6; }
+        th { background-color: #f8f9fa; color: var(--golf-green); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px; text-transform: uppercase; }
+        tr:hover { background-color: #f9fbf9; }
+
+        .rank-col { font-weight: 700; color: #495057; width: 60px; }
+        .diff-score { font-weight: 700; color: var(--mid-green); background-color: #e8f5e9; padding: 0.3rem 0.6rem; border-radius: 4px; display: inline-block; }
+
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; }
+        .badge.class-a { background-color: #cfe2ff; color: #084298; }
+        .badge.class-b { background-color: #fff3cd; color: #664d03; }
+        .badge.class-c { background-color: #f8d7da; color: #842029; }
+
+        footer { text-align: center; padding: 1.5rem; background-color: var(--golf-green); color: white; font-size: 0.85rem; margin-top: auto; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div class="logo">⛳ Maine High School Live Golf Rankings</div>
+            <div class="tagline">Official Media & Press Broadcast Stream</div>
+        </div>
+        <nav>
+            <button class="nav-btn active" id="btn-ind" onclick="toggleView('individual')">Individual Leaderboard</button>
+            <button class="nav-btn" id="btn-team" onclick="toggleView('team')">Team Standings</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="filter-row">
+            <div class="filter-group">
+                <label>MPA Class</label>
+                <select id="filter-class" onchange="updateLeaderboards()">
+                    <option value="all">All Classes</option>
+                    <option value="Class A">Class A</option>
+                    <option value="Class B">Class B</option>
+                    <option value="Class C">Class C</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Gender Subdivision</label>
+                <select id="filter-gender" onchange="updateLeaderboards()">
+                    <option value="all">All Genders</option>
+                    <option value="Boys">Boys</option>
+                    <option value="Girls">Girls</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Graduation Year</label>
+                <select id="filter-year" onchange="updateLeaderboards()">
+                    <option value="all">All Classes</option>
+                    <option value="2027">Class of 2027</option>
+                    <option value="2028">Class of 2028</option>
+                    <option value="2029">Class of 2029</option>
+                    <option value="2030">Class of 2030</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Athletic Conference</label>
+                <select id="filter-league" onchange="updateLeaderboards()">
+                    <option value="all">All Alliances</option>
+                    <option value="SMAA">SMAA - Div 1</option>
+                    <option value="KVAC">KVAC - Div 2</option>
+                    <option value="WMC">WMC - Div 3</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="leaderboard-container">
+            <div class="section-header">
+                <h2 id="view-title">Individual Aggregated Leaderboard</h2>
+                <p class="subtitle" id="view-subtitle">Rankings pulling live data modifications automatically compiled via HubSpot tracking</p>
+            </div>
+            
+            <div class="table-wrapper">
+                <table id="data-table">
+                    <thead id="table-head"></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Maine High School Athletic Association Engine | Automated Weekly Monday Fetch Operational</p>
+    </footer>
+
+    <script>
+        let playersDatabase = [];
+        let currentView = 'individual';
+
+        window.onload = async function() {
+            try {
+                // Fetch the synced dataset file from root path
+                const response = await fetch('players.json');
+                playersDatabase = await response.json();
+                console.log("Connected to local synced JSON database store.");
+            } catch (e) {
+                console.error("The dynamic players.json file has not been committed yet.", e);
+            }
+            updateLeaderboards();
+        };
+
+        function toggleView(view) {
+            currentView = view;
+            document.getElementById('btn-ind').classList.toggle('active', view === 'individual');
+            document.getElementById('btn-team').classList.toggle('active', view === 'team');
+            
+            const filterGender = document.getElementById('filter-gender');
+            const filterYear = document.getElementById('filter-year');
+            
+            if (view === 'individual') {
+                document.getElementById('view-title').innerText = "Individual Aggregated Leaderboard";
+                document.getElementById('view-subtitle').innerText = "Rankings ordered by lowest tracked weighted handicap differentials";
+                filterGender.disabled = false; filterYear.disabled = false;
+            } else {
+                document.getElementById('view-title').innerText = "Team Standings Leaderboard";
+                document.getElementById('view-subtitle').innerText = "Computed using the top four performing player records from each school program";
+                filterGender.disabled = true; filterYear.disabled = true;
+            }
+            updateLeaderboards();
+        }
+
+        function updateLeaderboards() {
+            const classVal = document.getElementById('filter-class').value;
+            const genderVal = document.getElementById('filter-gender').value;
+            const yearVal = document.getElementById('filter-year').value;
+            const leagueVal = document.getElementById('filter-league').value;
+
+            const tableHead = document.getElementById('table-head');
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = "";
+
+            if (playersDatabase.length === 0) {
+                tableBody.innerHTML = "<tr><td colspan='9' style='text-align:center; padding: 2rem; color: #999;'>Waiting for HubSpot worker sync execution...</td></tr>";
+                return;
+            }
+
+            if (currentView === 'individual') {
+                tableHead.innerHTML = `
+                    <tr>
+                        <th class="rank-col">Rank</th><th>Player Name</th><th>School Program</th>
+                        <th>Class</th><th>Gender</th><th>League Focus</th><th>Grad Year</th>
+                        <th>Average Differential</th><th>Rounds Count</th>
+                    </tr>
+                `;
+
+                let data = [...playersDatabase];
+
+                if (classVal !== 'all') data = data.filter(item => item.class === classVal);
+                if (genderVal !== 'all') data = data.filter(item => item.gender === genderVal);
+                if (yearVal !== 'all') data = data.filter(item => item.grad === yearVal);
+                if (leagueVal !== 'all') data = data.filter(item => item.league === leagueVal);
+
+                data.sort((a, b) => a.calculatedDiff - b.calculatedDiff);
+
+                data.forEach((p, idx) => {
+                    const classBadge = p.class.toLowerCase().replace(' ', '-');
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="rank-col">${idx + 1}</td><td><strong>${p.name}</strong></td><td>${p.school}</td>
+                            <td><span class="badge ${classBadge}">${p.class}</span></td><td>${p.gender}</td>
+                            <td>${p.league}</td><td>${p.grad}</td><td><span class="diff-score">${p.calculatedDiff.toFixed(2)}</span></td>
+                            <td>${p.roundsCount} Event Rounds</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tableHead.innerHTML = `
+                    <tr>
+                        <th class="rank-col">Rank</th><th>School Program Team</th><th>MPA Class</th>
+                        <th>Conference Division League</th><th>Combined Team Differential</th><th>Data Status</th>
+                    </tr>
+                `;
+
+                const schools = [...new Set(playersDatabase.map(p => p.school))];
+                let teamRecords = schools.map(schoolName => {
+                    const roster = playersDatabase.filter(p => p.school === schoolName);
+                    const sample = roster[0];
+                    
+                    let activeDiffs = roster.map(p => p.calculatedDiff).filter(d => d !== 99.9);
+                    if (activeDiffs.length === 0) return null;
+
+                    activeDiffs.sort((a,b) => a - b);
+                    const scoringFour = activeDiffs.slice(0, 4);
+                    const combinedDiff = scoringFour.reduce((a,b) => a + b, 0);
+
+                    return { school: schoolName, class: sample.class, league: sample.league, teamDiff: combinedDiff, count: scoringFour.length };
+                }).filter(item => item !== null);
+
+                if (classVal !== 'all') teamRecords = teamRecords.filter(item => item.class === classVal);
+                if (leagueVal !== 'all') teamRecords = teamRecords.filter(item => item.league === leagueVal);
+
+                teamRecords.sort((a, b) => a.teamDiff - b.teamDiff);
+
+                teamRecords.forEach((t, idx) => {
+                    const classBadge = t.class.toLowerCase().replace(' ', '-');
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="rank-col">${idx + 1}</td><td><strong>${t.school}</strong></td>
+                            <td><span class="badge ${classBadge}">${t.class}</span></td><td>${t.league}</td>
+                            <td><span class="diff-score">${t.teamDiff.toFixed(2)}</span></td>
+                            <td><small style="color: #666; font-style: italic;">(${t.count} Players Scoring)</small></td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

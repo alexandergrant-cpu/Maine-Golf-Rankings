@@ -1,0 +1,38 @@
+name: Weekly HubSpot Database Sync
+
+on:
+  schedule:
+    # Runs every Monday at 12:00 PM UTC (8:00 AM Eastern Standard Time)
+    - cron: '0 12 * * 1'
+  workflow_dispatch: # Adds a manual "Run now" button in GitHub Actions dashboard
+
+jobs:
+  build-and-sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Crucial: Allows GitHub to modify and save players.json
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Execute HubSpot Extraction Script
+      env:
+        HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+      run: node syncHubSpot.js
+
+    - name: Commit and Deploy Updated Data
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Automated Weekly Monday HubSpot Sync"
+        file_pattern: "players.json"
